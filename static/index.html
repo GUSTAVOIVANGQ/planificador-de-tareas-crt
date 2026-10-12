@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152c3e">
+  <meta name="description" content="Planificador local de tareas CRT con días inhábiles del artículo 28 de la LFPA y referencias oficiales.">
+  <title>CRT · Planificador y calendario LFPA</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+ <div class="wrap">
+  <div class="topnav">
+   <div class="brand"><div class="brandmark">CRT</div><span>Planificador de tareas</span></div>
+   <nav class="navlinks" aria-label="Menú principal"><a href="#calendario">Calendario</a><a href="#tareas">Tareas</a><a href="#calculo">Calculadora</a><a href="#fuentes">Fuentes oficiales</a></nav>
+   <span class="topchip"><span class="live-dot"></span> Modo local · Gratuito</span>
+  </div>
+  <div class="hero">
+   <div>
+    <div class="eyebrow">Calendario administrativo · Artículo 28 LFPA</div>
+    <h1>Organiza el trabajo.<br><span class="accent">Conoce los días inhábiles.</span></h1>
+    <p>Planifica tareas y calcula vencimientos con el calendario base de la Ley Federal de Procedimiento Administrativo. Consulta en cada fecha su motivo y fundamento oficial.</p>
+    <div class="hero-actions"><button type="button" class="btn light" id="newTaskTop">+ Nueva tarea</button><a class="hero-secondary" href="#calendario">Explorar calendario ↗</a></div>
+   </div>
+   <div class="hero-stat" aria-label="Resumen anual de días">
+     <div class="stat-top">Días inhábiles LFPA <span id="statYear">2026</span></div>
+     <div class="stat-num" id="statOff">—</div>
+     <div class="stat-bottom">Incluye sábados y domingos · Regla base LFPA</div>
+     <div class="stat-line"><span id="statWork">—</span> días hábiles base del año</div>
+   </div>
+  </div>
+ </div>
+</header>
+<main class="wrap page">
+ <div class="alert">
+   <span class="alert-icon" aria-hidden="true">i</span>
+   <div><strong>Dos calendarios distintos: plazos administrativos y descanso laboral.</strong>
+   Esta herramienta usa únicamente la <b>regla base del artículo 28 de la LFPA</b>, cuando sea jurídicamente aplicable. No marca suspensiones de plazos de la CRT como días de descanso del personal. Las tareas internas pueden programarse cualquier día y sus fechas no se recorren automáticamente.</div>
+ </div>
+ <div id="globalMessage" class="toast" role="status" aria-live="polite" hidden></div>
+
+ <div class="sectionhead" id="calendario"><div><div class="eyebrow dark">Vista general</div><h2>Calendario y disponibilidad legal</h2></div><button type="button" class="btn outline" id="exportCalendar">↓ Descargar calendario CSV</button></div>
+ <div class="overview-row" aria-label="Indicadores de tareas">
+  <div class="metric"><span class="metric-icon">▦</span><div><div class="metric-label">Total de tareas</div><div class="metric-value" id="metricTotal">0</div></div></div>
+  <div class="metric"><span class="metric-icon teal">◷</span><div><div class="metric-label">Pendientes</div><div class="metric-value" id="metricPending">0</div></div></div>
+  <div class="metric"><span class="metric-icon amber">!</span><div><div class="metric-label">Vencidas</div><div class="metric-value" id="metricOverdue">0</div></div></div>
+  <div class="metric"><span class="metric-icon blue">↻</span><div><div class="metric-label">Revisar recálculo</div><div class="metric-value" id="metricReview">0</div></div></div>
+ </div>
+ <div class="main-grid">
+  <section class="panel calendar-panel" aria-labelledby="calendarHeading">
+   <div class="calendar-top">
+    <div><div class="calendar-name" id="calendarHeading">Calendario mensual</div><div class="small">Selecciona una fecha para consultar su fundamento y tareas.</div></div>
+    <div class="calendar-controls"><button class="iconbtn" type="button" id="prevMonth" aria-label="Mes anterior">‹</button><button class="iconbtn todaybtn" type="button" id="currentMonth" title="Volver al mes actual">Hoy</button><button class="iconbtn" type="button" id="nextMonth" aria-label="Mes siguiente">›</button></div>
+   </div>
+   <div class="calendar-grid" id="calendar" aria-label="Calendario de días hábiles y tareas"></div>
+   <div class="legend"><span class="legenditem"><span class="swatch work"></span> Hábil base</span><span class="legenditem"><span class="swatch"></span> Fin de semana</span><span class="legenditem"><span class="swatch off"></span> Inhábil LFPA</span><span class="legenditem"><span class="swatch cus"></span> Excepción revisada</span><span class="legenditem"><span class="taskmarker-example"></span> Tareas</span></div>
+  </section>
+  <section class="panel details-panel" aria-labelledby="dayHeading">
+   <div class="split-heading"><span class="overline">FECHA SELECCIONADA</span><span class="mini-badge">Fuente oficial disponible</span></div>
+   <h3 class="selected-day" id="dayHeading">—</h3>
+   <div class="result" id="dateResult" aria-live="polite"><div class="status" id="resultStatus">Consultando...</div><div class="detail" id="resultDetail"></div><div class="next" id="resultNext"></div><div id="resultSources"></div></div>
+   <div class="day-tasks-head"><h3>Tareas de este día</h3><button class="btn tiny secondary" type="button" id="addForDay">+ Agregar</button></div>
+   <div id="dayTasks" class="daytask-list"></div>
+   <div class="separator"></div>
+   <h3 id="calculo">Calculadora LFPA</h3>
+   <form id="calcForm">
+    <div class="control-grid"><div class="field"><label for="startDate">Fecha de inicio</label><input type="date" id="startDate" required></div><div class="field"><label for="daysCount">Días hábiles</label><input id="daysCount" type="number" min="1" max="10000" value="10" required></div></div>
+    <p class="notice">Cuenta desde el día posterior al inicio. No incorpora horarios ni reglas especiales de notificación.</p>
+    <button class="btn full-button" type="submit">Calcular vencimiento <span aria-hidden="true">→</span></button>
+   </form>
+   <div class="calculator-output" id="calcOutput" aria-live="polite"></div>
+  </section>
+ </div>
+
+ <div class="sectionhead" id="tareas"><div><div class="eyebrow dark">Gestión del trabajo</div><h2>Planificador de tareas</h2></div><div class="btnrow"><button type="button" class="btn outline" id="exportTasks">↓ Exportar tareas</button><button type="button" class="btn" id="newTask">+ Nueva tarea</button></div></div>
+ <section class="panel task-panel">
+   <div class="task-toolbar">
+    <div class="field search-field"><label for="searchTask">Buscar tarea</label><input type="search" id="searchTask" placeholder="Título, responsable o área..."></div>
+    <div class="field"><label for="filterStatus">Estado</label><select id="filterStatus"><option value="todos">Todos los estados</option><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="concluida">Concluida</option><option value="cancelada">Cancelada</option></select></div>
+    <div class="field"><label for="filterType">Tipo</label><select id="filterType"><option value="todos">Todas las tareas</option><option value="interna">Interna</option><option value="plazo_lfpa">Plazo LFPA</option></select></div>
+   </div>
+   <div class="table-scroll"><table class="task-table"><thead><tr><th>Tarea</th><th>Responsable</th><th>Vencimiento</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="taskRows"><tr><td colspan="6" class="empty">Cargando tareas...</td></tr></tbody></table></div>
+   <div class="table-footer"><span id="taskCountLabel">0 tareas</span><span>Los cambios quedan guardados en SQLite, en tu computadora.</span></div>
+ </section>
+
+ <div class="sectionhead" id="fuentes"><div><div class="eyebrow dark">Transparencia normativa</div><h2>Fundamentos y ajustes de calendario</h2></div></div>
+ <div class="sources-grid">
+  <section class="panel">
+   <h3>Fuente jurídica del calendario</h3>
+   <div class="sourceitem"><span class="pill">Fuente oficial · Cámara de Diputados</span><strong>Ley Federal de Procedimiento Administrativo — artículo 28</strong><p>Inhábiles base: sábados, domingos, 1 de enero, 5 de febrero, 21 de marzo, 1 y 5 de mayo, 1 y 16 de septiembre, 20 de noviembre y 25 de diciembre. Incluye supuesto sexenal condicionado.</p><a href="https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPA.pdf" target="_blank" rel="noopener noreferrer">Leer ley oficial ↗</a></div>
+   <div class="sourceitem"><span class="pill pending">Regla de uso</span><strong>No se trasladan feriados a lunes automáticamente</strong><p>Se aplican las fechas literales del artículo 28, no los lunes de descanso establecidos para relaciones laborales por otras normas. El supuesto del 1 de diciembre sexenal exige verificación específica.</p></div>
+   <div class="year-list-head"><strong>Fechas específicas de <span id="holidayYear">2026</span></strong><span class="small">Además de todos los sábados y domingos</span></div><div id="holidayList" class="holiday-list"></div>
+   <p class="notice">El calendario base no verifica en tiempo real reformas legislativas. Confirma la versión vigente antes de usarlo para decisiones con efectos jurídicos.</p>
+   <div class="btnrow"><a href="https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPA.pdf" class="btn outline" target="_blank" rel="noopener noreferrer">Ver ley oficial ↗</a><a href="https://www.dof.gob.mx/" class="btn secondary" target="_blank" rel="noopener noreferrer">Consultar DOF ↗</a></div>
+  </section>
+  <section class="panel add-section">
+   <h3>Excepciones institucionales verificadas</h3>
+   <p class="small">Opcional: registra vacaciones generales, suspensión de <b>labores</b> o habilitación de fecha mediante un acuerdo revisado. <b>No incluyas suspensiones de plazos con personal trabajando.</b></p>
+   <form id="exceptionForm" class="stack-form">
+    <div class="control-grid"><div class="field"><label for="exceptionDate">Fecha</label><input id="exceptionDate" type="date" required></div><div class="field"><label for="exceptionType">Clasificación</label><select id="exceptionType"><option value="inhabil">Inhábil adicional</option><option value="habilitado">Día habilitado</option></select></div></div>
+    <div class="field"><label for="exceptionReason">Motivo sustentado en acuerdo</label><input type="text" id="exceptionReason" maxlength="260" placeholder="Ej. suspensión de labores declarada en acuerdo" required></div>
+    <div class="field"><label for="exceptionSource">Enlace HTTPS directo a la fuente oficial</label><input type="url" id="exceptionSource" placeholder="https://sidof.segob.gob.mx/notas/..." required></div>
+    <label class="confirm-line"><input type="checkbox" id="exceptionConfirm" required><span>Confirmo que revisé el documento y que corresponde a una excepción de días hábiles, no solamente a una suspensión de plazos.</span></label>
+    <button class="btn" type="submit">Registrar excepción</button>
+   </form>
+   <div id="exceptionList" class="entries"></div>
+   <div class="sectionnote">Las excepciones son registradas por quien administra esta instalación; el programa valida el formato del enlace, <b>no interpreta ni certifica su contenido</b>. Si alteran vencimientos calculados, los cambios se muestran para aprobación.</div>
+  </section>
+ </div>
+ <footer class="footer"><strong>Planificador CRT · Proyecto de demostración local</strong><div>Basado en la plantilla «CRT_Dias_Inhabiles.html». No es un sistema oficial ni contiene autenticación para uso institucional. Para publicar en internet se necesitan acceso por usuarios, seguridad y aprobación de TI.</div><div style="margin-top:10px"><a href="https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPA.pdf" target="_blank" rel="noopener noreferrer">Ley LFPA ↗</a><a href="https://www.dof.gob.mx/" target="_blank" rel="noopener noreferrer">DOF ↗</a></div></footer>
+</main>
+<dialog id="taskDialog" class="task-dialog" aria-labelledby="dialogTitle">
+ <form id="taskForm" class="dialog-form">
+  <div class="dialog-head"><div><div class="eyebrow dark">Administración de tareas</div><h2 id="dialogTitle">Nueva tarea</h2></div><button type="button" class="iconbtn" id="closeDialog" aria-label="Cerrar">×</button></div>
+  <div class="dialog-content">
+   <div class="field"><label for="taskTitle">Nombre de la tarea *</label><input type="text" id="taskTitle" maxlength="160" placeholder="Ej. Preparar oficio de respuesta" required></div>
+   <div class="control-grid"><div class="field"><label for="taskType">Tipo</label><select id="taskType"><option value="interna">Actividad interna</option><option value="plazo_lfpa">Plazo en días hábiles LFPA</option></select></div><div class="field"><label for="taskPriority">Prioridad</label><select id="taskPriority"><option value="media">Media</option><option value="alta">Alta</option><option value="baja">Baja</option></select></div></div>
+   <div class="control-grid"><div class="field"><label for="taskOwner">Responsable</label><input id="taskOwner" maxlength="120" placeholder="Nombre o puesto"></div><div class="field"><label for="taskArea">Área</label><input id="taskArea" maxlength="120" placeholder="Dirección o unidad"></div></div>
+   <div class="control-grid"><div class="field"><label for="taskStart">Fecha de inicio *</label><input type="date" id="taskStart" required></div><div class="field" id="dueBox"><label for="taskDue">Vencimiento interno *</label><input type="date" id="taskDue" required></div><div class="field" id="daysBox" hidden><label for="taskDays">Número de días hábiles *</label><input type="number" id="taskDays" min="1" max="10000" value="10"></div></div>
+   <div class="field"><label for="taskStatus">Estado</label><select id="taskStatus"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="concluida">Concluida</option><option value="cancelada">Cancelada</option></select></div>
+   <div class="field"><label for="taskDetail">Descripción o notas</label><textarea id="taskDetail" rows="3" maxlength="2000" placeholder="Información adicional de la actividad..."></textarea></div>
+   <div id="dueNotice" class="sectionnote">Las actividades internas no cambian de fecha automáticamente por estar en un día inhábil LFPA.</div>
+  </div>
+  <div class="dialog-actions"><button type="button" class="btn outline" id="cancelDialog">Cancelar</button><button type="submit" class="btn" id="saveTask">Guardar tarea</button></div>
+ </form>
+</dialog>
+</body>
+</html>
